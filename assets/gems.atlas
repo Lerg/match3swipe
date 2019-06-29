@@ -1,0 +1,153 @@
+animations {
+  id: "blue"
+  images {
+    image: "/assets/sprites/blue_00.png"
+  }
+  images {
+    image: "/assets/sprites/blue_01.png"
+  }
+  images {
+    image: "/assets/sprites/blue_02.png"
+  }
+  images {
+    image: "/assets/sprites/blue_03.png"
+  }
+  images {
+    image: "/assets/sprites/blue_04.png"
+  }
+  images {
+    image: "/assets/sprites/blue_05.png"
+  }
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+animations {
+  id: "green"
+  images {
+    image: "/assets/sprites/green_00.png"
+  }
+  images {
+    image: "/assets/sprites/green_01.png"
+  }
+  images {
+    image: "/assets/sprites/green_02.png"
+  }
+  images {
+    image: "/assets/sprites/green_03.png"
+  }
+  images {
+    image: "/assets/sprites/green_04.png"
+  }
+  images {
+    image: "/assets/sprites/green_05.png"
+  }
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+animations {
+  id: "orange"
+  images {
+    image: "/assets/sprites/orange_00.png"
+  }
+  images {
+    image: "/assets/sprites/orange_01.png"
+  }
+  images {
+    image: "/assets/sprites/orange_02.png"
+  }
+  images {
+    image: "/assets/sprites/orange_03.png"
+  }
+  images {
+    image: "/assets/sprites/orange_04.png"
+  }
+  images {
+    image: "/assets/sprites/orange_05.png"
+  }
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+animations {
+  id: "purple"
+  images {
+    image: "/assets/sprites/purple_00.png"
+  }
+  images {
+    image: "/assets/sprites/purple_01.png"
+  }
+  images {
+    image: "/assets/sprites/purple_02.png"
+  }
+  images {
+    image: "/assets/sprites/purple_03.png"
+  }
+  images {
+    image: "/assets/sprites/purple_04.png"
+  }
+  images {
+    image: "/assets/sprites/purple_05.png"
+  }
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+animations {
+  id: "red"
+  images {
+    image: "/assets/sprites/red_00.png"
+  }
+  images {
+    image: "/assets/sprites/red_01.png"
+  }
+  images {
+    image: "/assets/sprites/red_02.png"
+  }
+  images {
+    image: "/assets/sprites/red_03.png"
+  }
+  images {
+    image: "/assets/sprites/red_04.png"
+  }
+  images {
+    image: "/assets/sprites/red_05.png"
+  }
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+animations {
+  id: "teal"
+  images {
+    image: "/assets/sprites/teal_00.png"
+  }
+  images {
+    image: "/assets/sprites/teal_01.png"
+  }
+  images {
+    image: "/assets/sprites/teal_02.png"
+  }
+  images {
+    image: "/assets/sprites/teal_03.png"
+  }
+  images {
+    image: "/assets/sprites/teal_04.png"
+  }
+  images {
+    image: "/assets/sprites/teal_05.png"
+  }
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

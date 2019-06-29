@@ -1,0 +1,20 @@
+[bootstrap]
+main_collection = /main/main.collectionc
+render = /render/default.renderc
+
+[script]
+shared_state = 1
+
+[android]
+input_method = HiddenInputField
+
+[project]
+title = Match 3 Swipe
+
+[sprite]
+max_count = 1024
+
+[particle_fx]
+max_count = 1024
+max_particle_count = 4096
+

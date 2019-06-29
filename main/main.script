@@ -1,0 +1,293 @@
+local camera = require('libs.camera')
+local gems = require('classes.gems')
+local hashed = require('libs.hashed')
+local utils = require('libs.utils')
+
+local main = {}
+
+function main:init()
+	msg.post('.', 'acquire_input_focus')
+	self.gems = {}
+	self.reserved_gems = {}
+	self.line_powerups = {x = {}, y = {}}
+	local v_count = 10
+	local spacing = camera.height / v_count
+	local h_count = math.floor(camera.width / spacing)
+	local gem_size = 0.9 * spacing
+	self.width, self.height = h_count, v_count
+	self.spacing = spacing
+	for y = 0, v_count - 1 do
+		for x = 0, h_count - 1 do
+			local gem = gems.new{
+				size = gem_size,
+				x = (x + 0.5) * spacing,
+				y = (y + 0.5) * spacing,
+				on_match = function(g)
+					self:remove_gem(g)
+				end
+			}
+			gem.x, gem.y = x, y
+			self:set_gem(gem)
+		end
+	end
+end
+
+function main:get_gem(x, y)
+	assert(x >= 0, 'x < 0')
+	assert(y >= 0, 'y < 0')
+	assert(x < self.width, 'x >= self.width')
+	assert(y < self.height, 'y >= self.height')
+	return self.gems[x + y * self.width]
+end
+
+function main:set_gem(gem)
+	self.gems[gem.x + gem.y * self.width] = gem
+end
+
+function main:swap_gems(gem1, gem2)
+	local x1, y1 = gem1.x, gem1.y
+	local x2, y2 = gem2.x, gem2.y
+	gem1.x, gem1.y = x2, y2
+	gem2.x, gem2.y = x1, y1
+	self:set_gem(gem1)
+	self:set_gem(gem2)
+	gem1:animate_position((gem1.x + 0.5) * self.spacing, (gem1.y + 0.5) * self.spacing)
+	gem2:animate_position((gem2.x + 0.5) * self.spacing, (gem2.y + 0.5) * self.spacing)
+end
+
+function main:remove_gem(gem)
+	self.gems[gem.x + gem.y * self.width] = nil
+	gem:disable()
+	table.insert(self.reserved_gems, gem)
+end
+
+function main:find_axis_matches(start_gem, dx, dy)
+	local start_x = start_gem.x + dx
+	local start_y = start_gem.y + dy
+	local end_x = start_x + dx * (self.width - 1 - start_x)
+	local end_y = start_y + dy * (self.height - 1 - start_y)
+	local gem_type = start_gem.type
+	local count = 0
+	for x = start_x, end_x do
+		for y = start_y, end_y do
+			local g = self:get_gem(x, y)
+			if g and not g.is_block and g.type == gem_type then
+				count = count + 1
+			else
+				goto exit
+			end
+		end
+	end
+	::exit::
+	return count
+end
+
+function main:check_axis_neighbor_match(start_gem, dx, dy)
+	local start_x = start_gem.x + dx
+	local start_y = start_gem.y + dy
+	local end_x = utils.clamp(start_x + 2 * dx, 0, self.width - 1)
+	local end_y = utils.clamp(start_y + 2 * dy, 0, self.height - 1)
+	local gem_type = start_gem.type
+	local count = 0
+	for x = start_x, end_x, utils.sign(dx) do
+		for y = start_y, end_y, utils.sign(dy) do
+			local g = self:get_gem(x, y)
+			if g and not g.is_block and g.type == gem_type then
+				count = count + 1
+			else
+				goto exit
+			end
+		end
+	end
+	::exit::
+	return count
+end
+
+function main:check_match()
+	local matched = {}
+	for y = 0, self.height - 1 do
+		for x = 0, self.width - 1 do
+			local gem = self:get_gem(x, y)
+			if gem and not gem.is_block then
+				local h_count = self:find_axis_matches(gem, 1, 0)
+				local v_count = self:find_axis_matches(gem, 0, 1)
+				if h_count > 1 then
+					for mx = gem.x, gem.x + h_count do
+						local matched_gem = self:get_gem(mx, gem.y)
+						matched[matched_gem] = true
+					end
+				end
+				if v_count > 1 then
+					for my = gem.y, gem.y + v_count do
+						local matched_gem = self:get_gem(gem.x, my)
+						matched[matched_gem] = true
+					end
+				end
+				if h_count > 2 then
+					self.line_powerups.y[y] = true
+				end
+				if v_count > 2 then
+					self.line_powerups.x[x] = true
+				end
+			end
+		end
+	end
+	for gem, _ in pairs(matched) do
+		gem:match()
+	end
+end
+
+function main:gems_flow()
+	for y = 1, self.height - 1 do
+		for x = 0, self.width - 1 do
+			local gem = self:get_gem(x, y)
+			if gem and not gem.is_block then
+				if not self:get_gem(x, y - 1) then
+					self.gems[x + y * self.width] = nil
+					gem.y = y - 1
+					self:set_gem(gem)
+					gem:animate_position_y((gem.y + 0.5) * self.spacing)
+				end
+			end
+		end
+	end
+end
+
+function main:spawn_gems()
+	local y = self.height - 1
+	for x = 0, self.width - 1 do
+		local gem = self:get_gem(x, y)
+		if not gem then
+			local new_gem = self.reserved_gems[#self.reserved_gems]
+			self.reserved_gems[#self.reserved_gems] = nil
+			new_gem:reset()
+			new_gem.x, new_gem.y = x, y
+			self:set_gem(new_gem)
+			new_gem:set_position((new_gem.x + 0.5) * self.spacing, (new_gem.y - 0.5) * self.spacing)
+			new_gem:animate_position_y((new_gem.y + 0.5) * self.spacing)
+		end
+	end
+end
+
+function main:swipe(dx, dy)
+	local start_x, start_y = 0, 0
+	local end_x, end_y = self.width - 1, self.height - 1
+	local inc_x, inc_y = 1, 1
+	if dx == 1 then
+		end_x = end_x - 1
+	elseif dx == -1 then
+		start_x, end_x = end_x, start_x
+		inc_x = -1
+		end_x = end_x + 1
+	end
+	if dy == 1 then
+		end_y = end_y - 1
+	elseif dy == -1 then
+		start_y, end_y = end_y, start_y
+		inc_y = -1
+		end_y = end_y + 1
+	end
+	for x = start_x, end_x, inc_x do
+		for y = start_y, end_y, inc_y do
+			local gem = self:get_gem(x, y)
+			if gem and not gem.is_block then
+				local target_gem = self:get_gem(x + dx, y + dy)
+				if target_gem and not target_gem.is_block then
+					local fake_gem = {
+						x = target_gem.x, y = target_gem.y,
+						type = gem.type
+					}
+					local axis_counts = {0, 0}
+					local directions = {
+						{1, 0},
+						{-1, 0},
+						{0, 1},
+						{0, -1}
+					}
+					local is_swap = false
+					for i = 1, #directions do
+						local dir_x, dir_y = directions[i][1], directions[i][2]
+						if not (dir_x == -dx and dir_y == -dy) then
+							local count = self:check_axis_neighbor_match(fake_gem, dir_x, dir_y)
+							local axis_index = math.floor((i - 1) / 2) + 1
+							axis_counts[axis_index] = axis_counts[axis_index] + count
+							if axis_counts[axis_index] > 1 then
+								self:swap_gems(gem, target_gem)
+								is_swap = true
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+function main:check_powerups()
+	local lines = {'x', 'y'}
+	local limits = {
+		x = self.width - 1,
+		y = self.height - 1
+	}
+	for i = 1, #lines do
+		local line = lines[i]
+		for c = 0, limits[line] do
+			if self.line_powerups[line][c] then
+				local is_stable = true
+				local line_gems = {}
+				for ortho_c = 0, limits[line == 'x' and 'y' or 'x'] do
+					local x, y = c, ortho_c
+					if line == 'y' then
+						x, y = ortho_c, c
+					end
+					local gem = self:get_gem(x, y)
+					if not gem or gem.is_block then
+						is_stable = false
+						break
+					end
+					table.insert(line_gems, gem)
+				end
+				if is_stable then
+					for j = 1, #line_gems do
+						line_gems[j]:match()
+					end
+					self.line_powerups[line][c] = nil
+				end
+			end
+		end
+	end
+end
+
+function main:update(dt)
+	if self.gems then
+		self:check_match()
+		self:check_powerups()
+		self:gems_flow()
+		self:spawn_gems()
+	end
+end
+
+function init(self)
+	timer.delay(0.1, false, function()
+		main:init()
+	end)
+end
+
+function update(self, dt)
+	main:update(dt)
+end
+
+function on_input(self, action_id, action)
+	if action and action.pressed and main.gems then
+		if action_id == hashed.left then
+			main:swipe(-1, 0)
+		elseif action_id == hashed.right then
+			main:swipe(1, 0)
+		elseif action_id == hashed.up then
+			main:swipe(0, 1)
+		elseif action_id == hashed.down then
+			main:swipe(0, -1)
+		end
+	end
+end

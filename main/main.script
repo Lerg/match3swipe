@@ -68,17 +68,21 @@ function main:find_axis_matches(start_gem, dx, dy)
 	local end_y = start_y + dy * (self.height - 1 - start_y)
 	local gem_type = start_gem.type
 	local count = 0
+	local is_break = false
 	for x = start_x, end_x do
 		for y = start_y, end_y do
 			local g = self:get_gem(x, y)
 			if g and not g.is_block and g.type == gem_type then
 				count = count + 1
 			else
-				goto exit
+				is_break = true
+				break
 			end
 		end
+		if is_break then
+			break
+		end
 	end
-	::exit::
 	return count
 end
 
@@ -89,17 +93,21 @@ function main:check_axis_neighbor_match(start_gem, dx, dy)
 	local end_y = utils.clamp(start_y + 2 * dy, 0, self.height - 1)
 	local gem_type = start_gem.type
 	local count = 0
+	local is_break = false
 	for x = start_x, end_x, utils.sign(dx) do
 		for y = start_y, end_y, utils.sign(dy) do
 			local g = self:get_gem(x, y)
 			if g and not g.is_block and g.type == gem_type then
 				count = count + 1
 			else
-				goto exit
+				is_break = true
+				break
 			end
 		end
+		if is_break then
+			break
+		end
 	end
-	::exit::
 	return count
 end
 

@@ -287,15 +287,34 @@ function update(self, dt)
 end
 
 function on_input(self, action_id, action)
-	if action and action.pressed and main.gems then
-		if action_id == hashed.left then
-			main:swipe(-1, 0)
-		elseif action_id == hashed.right then
-			main:swipe(1, 0)
-		elseif action_id == hashed.up then
-			main:swipe(0, 1)
-		elseif action_id == hashed.down then
-			main:swipe(0, -1)
+	if action and main.gems then
+		if action_id == hashed.touch then
+			if action.pressed then
+				self.is_focused = true
+				self.start_x, self.start_y = action.x, action.y
+			elseif action.released then
+				self.is_focused = false
+			elseif self.is_focused then
+				local d = 0.1 * camera.width
+				local dx, dy = self.start_x - action.x, self.start_y - action.y
+				if math.abs(dx) > d then
+					main:swipe(-utils.sign(dx), 0)
+					self.is_focused = false
+				elseif math.abs(dy) > d then
+					main:swipe(0, -utils.sign(dy))
+					self.is_focused = false
+				end
+			end
+		elseif action.pressed then
+			if action_id == hashed.left then
+				main:swipe(-1, 0)
+			elseif action_id == hashed.right then
+				main:swipe(1, 0)
+			elseif action_id == hashed.up then
+				main:swipe(0, 1)
+			elseif action_id == hashed.down then
+				main:swipe(0, -1)
+			end
 		end
 	end
 end

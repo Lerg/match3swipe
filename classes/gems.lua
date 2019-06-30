@@ -24,6 +24,13 @@ local function gem_match_fx(self)
 			end)
 		end
 	)
+	go.animate(
+		self.instance,
+		'scale',
+		go.PLAYBACK_ONCE_FORWARD,
+		1.25 * vmath.vector3(self.size, self.size, 1),
+		go.EASING_INQUAD, 0.3
+	)
 end
 
 local function gem_match(self)
@@ -33,6 +40,7 @@ end
 
 local function gem_reset(self)
 	self.is_block = false
+	go.set_scale(vmath.vector3(self.size, self.size, 1), self.instance)
 	msg.post(self.instance, hashed.enable)
 	sprite.reset_constant(self.sprite_url, 'tint')
 	self.type = types[math.random(1, #types)]
@@ -86,7 +94,8 @@ function _M.new(params)
 	}
 	local position = vmath.vector3(params.x, params.y, 0)
 	local original_size = 16
-	local scale = vmath.vector3(params.size / original_size, params.size / original_size, 1)
+	gem.size = params.size / original_size
+	local scale = vmath.vector3(gem.size, gem.size, 1)
 	local rotation = vmath.quat()
 	gem.instance = factory.create('/assets#gem', position, rotation, nil, scale)
 	gem.explosion_url = msg.url(nil, gem.instance, 'explosion')

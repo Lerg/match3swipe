@@ -6,10 +6,12 @@ local utils = require('libs.utils')
 local main = {}
 
 function main:init()
+	math.randomseed(os.time())
 	msg.post('.', 'acquire_input_focus')
 	self.gems = {}
 	self.reserved_gems = {}
 	self.line_powerups = {x = {}, y = {}}
+	self.super_line_powerups = {x = {}, y = {}}
 	local v_count = 10
 	local spacing = camera.height / v_count
 	local h_count = math.floor(camera.width / spacing)
@@ -131,10 +133,14 @@ function main:check_match()
 						matched[matched_gem] = true
 					end
 				end
-				if h_count > 2 then
+				if h_count > 3 then
+					self.super_line_powerups.y[y] = true
+				elseif h_count > 2 then
 					self.line_powerups.y[y] = true
 				end
-				if v_count > 2 then
+				if v_count > 3 then
+					self.super_line_powerups.x[x] = true
+				elseif v_count > 2 then
 					self.line_powerups.x[x] = true
 				end
 			end
@@ -171,7 +177,7 @@ function main:spawn_gems()
 			new_gem:reset()
 			new_gem.x, new_gem.y = x, y
 			self:set_gem(new_gem)
-			new_gem:set_position((new_gem.x + 0.5) * self.spacing, (new_gem.y - 0.5) * self.spacing)
+			new_gem:set_position((new_gem.x + 0.5) * self.spacing, (new_gem.y + 1.5) * self.spacing)
 			new_gem:animate_position_y((new_gem.y + 0.5) * self.spacing)
 		end
 	end
@@ -238,30 +244,43 @@ function main:check_powerups()
 		x = self.width - 1,
 		y = self.height - 1
 	}
+	local function is_line_stalbe(line, c, line_gems)
+		local is_stable = true
+		for ortho_c = 0, limits[line == 'x' and 'y' or 'x'] do
+			local x, y = c, ortho_c
+			if line == 'y' then
+				x, y = ortho_c, c
+			end
+			local gem = self:get_gem(x, y)
+			if not gem or gem.is_block then
+				is_stable = false
+				break
+			end
+			table.insert(line_gems, gem)
+		end
+		return is_stable
+	end
 	for i = 1, #lines do
 		local line = lines[i]
 		for c = 0, limits[line] do
-			if self.line_powerups[line][c] then
-				local is_stable = true
-				local line_gems = {}
-				for ortho_c = 0, limits[line == 'x' and 'y' or 'x'] do
-					local x, y = c, ortho_c
-					if line == 'y' then
-						x, y = ortho_c, c
-					end
-					local gem = self:get_gem(x, y)
-					if not gem or gem.is_block then
+			local line_gems = {}
+			local is_stable = false
+			if self.super_line_powerups[line][c] then
+				is_stable = true
+				for k = math.max(c - 1, 0), math.min(c + 1, limits[line]) do
+					if not is_line_stalbe(line, k, line_gems) then
 						is_stable = false
-						break
 					end
-					table.insert(line_gems, gem)
 				end
-				if is_stable then
-					for j = 1, #line_gems do
-						line_gems[j]:match()
-					end
-					self.line_powerups[line][c] = nil
+			elseif self.line_powerups[line][c] then
+				is_stable = is_line_stalbe(line, c, line_gems)
+			end
+			if is_stable then
+				for j = 1, #line_gems do
+					line_gems[j]:match()
 				end
+				self.super_line_powerups[line][c] = nil
+				self.line_powerups[line][c] = nil
 			end
 		end
 	end
